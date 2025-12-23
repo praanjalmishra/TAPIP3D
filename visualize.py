@@ -69,12 +69,14 @@ def process_point_cloud_data(npz_file, output_file, width=256, height=192, fps=4
     depths_rgb[:, :, :, 1] = ((depth_int >> 8) & 0xFF).astype(np.uint8)
     
     first_frame_inv = np.linalg.inv(extrinsics[0])
-    normalized_extrinsics = np.array([first_frame_inv @ ext for ext in extrinsics])
-    
+
+    normalized_extrinsics = np.array([ext @ first_frame_inv for ext in extrinsics])
+
     normalized_trajs = np.zeros_like(trajs)
     for t in range(T):
         homogeneous_trajs = np.concatenate([trajs[t], np.ones((trajs.shape[1], 1))], axis=1)
-        transformed_trajs = (first_frame_inv @ homogeneous_trajs.T).T
+        
+        transformed_trajs = (np.linalg.inv(first_frame_inv) @ homogeneous_trajs.T).T
         normalized_trajs[t] = transformed_trajs[:, :3]
     
     arrays = {
